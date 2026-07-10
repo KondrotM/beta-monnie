@@ -52,6 +52,24 @@ test('creating a product makes it appear in admin and on the public site', async
 	await expect(page.getByText('£12.50')).toBeVisible();
 });
 
+test('login page is locked down: no storefront chrome, no admin nav', async ({ page }) => {
+	await page.goto('/admin/login');
+	await expect(page.getByLabel('Password')).toBeVisible();
+	// no storefront chrome
+	await expect(page.getByRole('button', { name: 'Open menu' })).toHaveCount(0);
+	await expect(page.locator('a[href="/cart"]')).toHaveCount(0);
+	// no admin nav for the logged-out visitor
+	await expect(page.getByRole('link', { name: 'Dashboard' })).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Log out' })).toHaveCount(0);
+});
+
+test('admin pages show admin nav but no storefront chrome', async ({ page }) => {
+	await login(page);
+	await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Open menu' })).toHaveCount(0);
+	await expect(page.locator('a[href="/cart"]')).toHaveCount(0);
+});
+
 test('logout ends the session', async ({ page }) => {
 	await login(page);
 	await page.getByRole('button', { name: 'Log out' }).click();

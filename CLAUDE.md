@@ -53,26 +53,28 @@ src/
       images.ts          ← upload helper: saves locally in dev, S3 in prod
     cart.svelte.ts       ← Svelte 5 class-based cart store (localStorage)
   routes/
-    +layout.svelte       ← nav (hamburger + logo + cart icon) + footer
-    +page.svelte         ← home
-    products/
-      +page.server.ts    ← load all products
-      +page.svelte       ← product listing
-      [id]/
-        +page.server.ts  ← load single product with images
-        +page.svelte     ← product detail (Swiper gallery + add to cart)
-    cart/
-      +page.svelte       ← cart contents + IG checkout instructions
-    about/+page.svelte
-    contact/+page.svelte
-    admin/
+    +layout.svelte       ← root layout: css + favicon only (NO chrome — see below)
+    (store)/             ← route group: storefront pages, does not affect URLs
+      +layout.svelte     ← storefront chrome: hamburger nav, logo, cart icon, footer
+      +page.svelte       ← home
+      products/
+        +page.server.ts  ← load all products
+        +page.svelte     ← product listing
+        [id]/
+          +page.server.ts  ← load single product with images
+          +page.svelte     ← product detail (Swiper gallery + add to cart)
+      cart/
+        +page.svelte     ← cart contents + IG checkout instructions
+      about/+page.svelte
+      contact/+page.svelte
+    admin/               ← outside (store): admin never gets storefront chrome
       +layout.server.ts  ← auth guard: redirects to /admin/login if no valid session
       +layout.svelte     ← admin nav
       +page.server.ts    ← load all products for dashboard
       +page.svelte       ← product list with edit/delete links
       login/
-        +page.server.ts  ← form action: validate password, create session
-        +page.svelte
+        +page.server.ts  ← form actions: login, logout
+        +page@.svelte    ← `@` = layout reset: bare page, no admin nav for logged-out visitors
       products/
         new/
           +page.server.ts  ← form action: create product + upload images

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
-import { load as listLoad } from '../routes/products/+page.server';
-import { load as detailLoad } from '../routes/products/[id]/+page.server';
+import { load as listLoad } from '../routes/(store)/products/+page.server';
+import { load as detailLoad } from '../routes/(store)/products/[id]/+page.server';
 import { seedProduct, seedImages } from './helpers';
 
 describe('products listing', () => {

@@ -7,7 +7,7 @@
 	<title>Admin login</title>
 </svelte:head>
 
-<div class="mx-auto mt-24 max-w-sm">
+<div class="mx-auto mt-24 max-w-sm px-4">
 	<h1 class="mb-6 text-2xl font-bold">Admin</h1>
 
 	<form method="POST" action="?/login" class="flex flex-col gap-4">
