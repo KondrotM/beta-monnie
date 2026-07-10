@@ -40,8 +40,39 @@ test('product detail shows name and formatted price', async ({ page }) => {
 test('sold-out product cannot be added to the cart', async ({ page }) => {
 	await page.goto('/products');
 	await page.getByRole('link', { name: /Seafoam Tiara/ }).click();
-	await expect(page.getByText('Out of stock')).toBeVisible();
+	await expect(page.getByText('Sold out')).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Add to Cart' })).toHaveCount(0);
+});
+
+test('product gallery shows every image, with thumbnails and a counter', async ({ page }) => {
+	await page.goto('/products');
+	await page.getByRole('link', { name: /Pearl Crown/ }).click();
+
+	await expect(page.getByTestId('gallery').locator('img')).toHaveCount(3);
+	await expect(page.getByTestId('thumbnails').locator('button')).toHaveCount(3);
+	await expect(page.getByText('1 / 3')).toBeVisible();
+
+	// selecting a thumbnail moves the gallery
+	await page.getByTestId('thumbnails').locator('button').nth(2).click();
+	await expect(page.getByText('3 / 3')).toBeVisible();
+});
+
+test('clicking the photo opens a fullscreen lightbox, Escape closes it', async ({ page }) => {
+	await page.goto('/products');
+	await page.getByRole('link', { name: /Pearl Crown/ }).click();
+
+	await page.getByRole('button', { name: /Zoom image 1/ }).click();
+	await expect(page.locator('dialog')).toBeVisible();
+
+	await page.keyboard.press('Escape');
+	await expect(page.locator('dialog')).not.toBeVisible();
+});
+
+test('a product without gallery images still renders a placeholder', async ({ page }) => {
+	await page.goto('/products');
+	await page.getByRole('link', { name: /Seafoam Tiara/ }).click();
+	await expect(page.getByText('No image')).toBeVisible();
+	await expect(page.getByTestId('thumbnails')).toHaveCount(0);
 });
 
 test('full cart flow: add, badge, cart page, persistence, clear', async ({ page }) => {

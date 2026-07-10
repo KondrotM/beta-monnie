@@ -16,11 +16,30 @@ export default async function globalSetup() {
 	const { statementsToExecute } = await pushSQLiteSchema(schema, db as never);
 	for (const stmt of statementsToExecute) client.exec(stmt);
 
-	db.insert(schema.products)
+	const [pearl] = db
+		.insert(schema.products)
 		.values([
-			{ name: 'Pearl Crown', price: 45, quantity: 3, description: 'Seeded for e2e.' },
-			{ name: 'Seafoam Tiara', price: 30, quantity: 0, description: 'Seeded, sold out.' }
+			{
+				name: 'Pearl Crown',
+				price: 45,
+				quantity: 3,
+				description: 'Seeded for e2e.',
+				hero: '/uploads/pearl-1.jpg'
+			},
+			{ name: 'Seafoam Tiara', price: 30, quantity: 0, description: 'Seeded, none in stock.' }
 		])
+		.returning()
+		.all();
+
+	// Gallery images for Pearl Crown (files don't exist — DOM-level tests only)
+	db.insert(schema.productImages)
+		.values(
+			['/uploads/pearl-1.jpg', '/uploads/pearl-2.jpg', '/uploads/pearl-3.jpg'].map((url, i) => ({
+				productId: pearl.id,
+				url,
+				sortOrder: i
+			}))
+		)
 		.run();
 
 	// Admin password for the suite — plaintext 'test-password'

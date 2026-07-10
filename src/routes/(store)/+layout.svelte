@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cart } from '$lib/cart.svelte';
+	import bagIcon from '$lib/assets/shopping-bag.svg';
 
 	let { children } = $props();
 	let menuOpen = $state(false);
@@ -41,10 +42,10 @@
 	</a>
 
 	<a href="/cart" class="relative" aria-label="Cart">
-		🧺
+		<img src={bagIcon} alt="" class="h-6 w-6" />
 		{#if cart.count > 0}
 			<span
-				class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-400 text-xs text-white"
+				class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-teal-400 text-xs text-white"
 			>
 				{cart.count}
 			</span>

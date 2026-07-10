@@ -10,7 +10,7 @@ A storefront for handmade mermaid crowns and tiaras (sister's business). This is
 | Database | SQLite via better-sqlite3 | No daemon, one file, trivially backed up |
 | ORM | Drizzle | Lightweight, type-safe, handles migrations |
 | Styling | Tailwind CSS v4 | Same as before |
-| Image gallery | Swiper | Same as before, keep the zoom/swipe UX |
+| Image gallery | Hand-rolled: CSS scroll-snap + native `<dialog>` lightbox | Same swipe/zoom UX as the old Swiper setup, zero dependencies (Swiper deprecated its framework wrappers) |
 | Auth | DB-backed session cookie | Simple — one hardcoded admin account in .env |
 | Images | Local in dev, S3 in prod | No AWS creds needed to develop |
 | Deployment | Single Docker container (adapter-node) | Replaces 4 containers + 3 networks |
@@ -67,7 +67,7 @@ src/
         +page.svelte     ← product listing
         [id]/
           +page.server.ts  ← load single product with images
-          +page.svelte     ← product detail (Swiper gallery + add to cart)
+          +page.svelte     ← product detail: scroll-snap gallery, thumbnails, <dialog> lightbox, add to cart
       cart/
         +page.svelte     ← cart contents + IG checkout instructions
       about/+page.svelte
@@ -184,7 +184,7 @@ This project uses Svelte 5. Key differences from Svelte 4:
 
 ## What still needs building
 
-- [ ] Swiper gallery with zoom on product detail page (`npm install swiper`)
+- [x] Product gallery with zoom (built with scroll-snap + `<dialog>`, no Swiper needed)
 - [ ] Home page content (hero images, welcome text — waiting on copy/images)
 - [ ] Copy assets from old frontend/public/ into static/
 - [x] Seed script with live product data (`npm run db:seed` — scrapes the live site)
