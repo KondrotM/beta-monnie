@@ -10,7 +10,7 @@
 <div class="mx-auto mt-24 max-w-sm">
 	<h1 class="mb-6 text-2xl font-bold">Admin</h1>
 
-	<form method="POST" class="flex flex-col gap-4">
+	<form method="POST" action="?/login" class="flex flex-col gap-4">
 		<label class="flex flex-col gap-1">
 			<span class="text-sm text-gray-600">Password</span>
 			<input

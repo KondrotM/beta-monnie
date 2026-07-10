@@ -11,9 +11,14 @@ import { db } from '$lib/server/db';
 const { statementsToExecute } = await pushSQLiteSchema(schema, db as never);
 for (const stmt of statementsToExecute) db.$client.exec(stmt);
 
-// Every test starts from an empty database.
+// Every test starts from an empty database with the admin password
+// configured (hash of 'test-password' — matches vite.config.ts test.env docs).
+const TEST_HASH = '$2b$10$us7v.pYfkcnZ8tW8NLsPJex8k4uKmvcohHT9yf9/KpqByHYTJky8G';
+
 beforeEach(() => {
 	db.delete(schema.productImages).run();
 	db.delete(schema.products).run();
 	db.delete(schema.adminSessions).run();
+	db.delete(schema.settings).run();
+	db.insert(schema.settings).values({ key: 'admin_password_hash', value: TEST_HASH }).run();
 });

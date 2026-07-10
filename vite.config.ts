@@ -13,10 +13,9 @@ export default defineConfig({
 		// Each test file gets its own module graph, so DATABASE_URL=:memory:
 		// means a fresh, isolated database per file.
 		env: {
-			DATABASE_URL: ':memory:',
-			ADMIN_EMAIL: 'admin@test.local',
-			// bcrypt hash of 'test-password'
-			ADMIN_PASSWORD_HASH: '$2b$10$us7v.pYfkcnZ8tW8NLsPJex8k4uKmvcohHT9yf9/KpqByHYTJky8G'
+			DATABASE_URL: ':memory:'
+			// The admin password hash lives in the DB (settings table) and is
+			// seeded by src/tests/setup.ts — plaintext is 'test-password'.
 		},
 		alias: {
 			// SvelteKit virtual modules don't exist outside the kit runtime;

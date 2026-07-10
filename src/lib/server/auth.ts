@@ -2,16 +2,19 @@ import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import type { Cookies } from '@sveltejs/kit';
 import { db } from './db';
-import { adminSessions } from './db/schema';
+import { adminSessions, settings } from './db/schema';
 import { env } from '$env/dynamic/private';
 
 const COOKIE_NAME = 'mm_session';
 const SESSION_DAYS = 30;
 const SESSION_MS = SESSION_DAYS * 24 * 60 * 60 * 1000;
 
+// The hash lives in the DB, not .env: dotenv-expand treats the `$` sections
+// of a bcrypt hash as variable references and silently corrupts the value.
 export async function validatePassword(password: string): Promise<boolean> {
-	if (!env.ADMIN_PASSWORD_HASH) throw new Error('ADMIN_PASSWORD_HASH is not set');
-	return bcrypt.compare(password, env.ADMIN_PASSWORD_HASH);
+	const row = db.select().from(settings).where(eq(settings.key, 'admin_password_hash')).get();
+	if (!row) throw new Error('Admin password not set — run: npm run set-password');
+	return bcrypt.compare(password, row.value);
 }
 
 export function createSession(cookies: Cookies): void {

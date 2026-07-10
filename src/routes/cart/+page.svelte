@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cart } from '$lib/cart.svelte';
+	import { formatPrice } from '$lib/format';
 
 	// Instagram handle — update if it changes
 	const INSTAGRAM = 'https://www.instagram.com/monniemermaidofficial/';
@@ -24,7 +25,7 @@
 				<div class="flex-1">
 					<p class="font-bold">{item.name}</p>
 					<p class="text-sm text-gray-600">Qty: {item.quantity}</p>
-					<p>£{(item.price * item.quantity).toFixed(2)}</p>
+					<p>{formatPrice(item.price * item.quantity)}</p>
 				</div>
 				<button
 					onclick={() => cart.remove(item.id)}
@@ -37,7 +38,7 @@
 		{/each}
 
 		<div class="mt-2 text-xl font-bold">
-			Total: £{cart.total.toFixed(2)}
+			Total: {formatPrice(cart.total)}
 		</div>
 	</div>
 

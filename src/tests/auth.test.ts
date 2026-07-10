@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { adminSessions } from '$lib/server/db/schema';
+import { adminSessions, settings } from '$lib/server/db/schema';
 import { validatePassword, createSession, validateSession, deleteSession } from '$lib/server/auth';
 import { mockCookies } from './helpers';
 
@@ -18,14 +18,9 @@ describe('validatePassword', () => {
 		expect(await validatePassword('')).toBe(false);
 	});
 
-	it('throws when ADMIN_PASSWORD_HASH is not set', async () => {
-		const saved = process.env.ADMIN_PASSWORD_HASH;
-		delete process.env.ADMIN_PASSWORD_HASH;
-		try {
-			await expect(validatePassword('anything')).rejects.toThrow('ADMIN_PASSWORD_HASH');
-		} finally {
-			process.env.ADMIN_PASSWORD_HASH = saved;
-		}
+	it('throws when no admin password has been configured', async () => {
+		db.delete(settings).run();
+		await expect(validatePassword('anything')).rejects.toThrow(/set-password/);
 	});
 });
 

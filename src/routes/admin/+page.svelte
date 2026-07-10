@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { formatPrice } from '$lib/format';
+
 	let { data } = $props();
 </script>
 
@@ -16,7 +18,7 @@
 			{/if}
 			<div class="flex-1">
 				<p class="font-bold">{product.name}</p>
-				<p class="text-sm text-gray-600">£{product.price} · qty: {product.quantity}</p>
+				<p class="text-sm text-gray-600">{formatPrice(product.price)} · qty: {product.quantity}</p>
 			</div>
 			<a href="/admin/products/{product.id}" class="text-sm underline">Edit</a>
 		</div>

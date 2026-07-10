@@ -19,6 +19,13 @@ export const productImages = sqliteTable('product_images', {
 	sortOrder: integer('sort_order').default(0)
 });
 
+// Small key/value store for server config that must not live in .env
+// (dotenv-expand mangles values containing `$`, e.g. bcrypt hashes).
+export const settings = sqliteTable('settings', {
+	key: text('key').primaryKey(),
+	value: text('value').notNull()
+});
+
 export const adminSessions = sqliteTable('admin_sessions', {
 	id: text('id').primaryKey(),
 	createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

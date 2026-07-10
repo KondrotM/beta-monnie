@@ -18,28 +18,21 @@ A storefront for handmade mermaid crowns and tiaras (sister's business). This is
 ## Running in dev
 
 ```bash
-cp .env.example .env          # fill in ADMIN_PASSWORD_HASH (see below)
+cp .env.example .env
 npm run db:push               # creates local.db and runs schema
+npm run set-password          # prompts for the admin password, stores hash in DB
 npm run dev                   # starts on http://localhost:5173
 ```
 
 No Docker needed locally. The database is `local.db` in the project root (gitignored).
 
-### Generating an admin password hash
-
-```bash
-node -e "import('bcrypt').then(b => b.default.hash('yourpassword', 10).then(console.log))"
-```
-
-Paste the output as `ADMIN_PASSWORD_HASH` in `.env`.
+**The admin password hash lives in the database (`settings` table), NOT in `.env`.** This is deliberate: Vite runs `.env` through dotenv-expand, which treats the `$` sections of a bcrypt hash as variable references and silently corrupts the value (login then always fails with "Invalid password"). Never move it back to `.env`.
 
 ## Environment variables
 
 | Variable | Dev | Prod | Purpose |
 |---|---|---|---|
 | `DATABASE_URL` | `local.db` | `/data/prod.db` | SQLite file path |
-| `ADMIN_EMAIL` | any | real email | Display only |
-| `ADMIN_PASSWORD_HASH` | bcrypt hash | bcrypt hash | Admin login |
 | `NODE_ENV` | `development` | `production` | Controls image storage |
 | `AWS_ACCESS_KEY_ID` | not needed | required | S3 uploads |
 | `AWS_SECRET_ACCESS_KEY` | not needed | required | S3 uploads |
@@ -97,14 +90,15 @@ Three tables. See `src/lib/server/db/schema.ts` for the Drizzle definitions.
 products        id, name, price, description, quantity, hero, created_at
 product_images  id, product_id→products, url, sort_order
 admin_sessions  id (UUID), created_at, expires_at
+settings        key, value   ← admin_password_hash lives here (not .env!)
 ```
 
 ## Auth
 
-One admin account. Credentials live in `.env` (`ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`).
+One admin account, password only. The bcrypt hash is stored in the `settings` table (key `admin_password_hash`), set via `npm run set-password` (`scripts/set-password.ts`).
 
 Flow:
-1. POST `/admin/login` → compare password with bcrypt hash → insert row in `admin_sessions` → set `mm_session` cookie (httpOnly, secure in prod)
+1. POST `/admin/login?/login` → compare password with bcrypt hash → insert row in `admin_sessions` → set `mm_session` cookie (httpOnly, secure in prod). NB: both actions on this route are **named** (`login`, `logout`) — SvelteKit forbids mixing `default` with named actions (any POST 500s).
 2. Every admin route's `+layout.server.ts` reads the cookie and checks it against `admin_sessions`
 3. Logout deletes the session row and clears the cookie
 
@@ -133,12 +127,15 @@ The checkout flow is intentionally simple: the cart page prints the cart content
 
 ## Testing
 
-Vitest, configured in `vite.config.ts` (`test` block). **This project is developed TDD: write or update tests before implementing features.**
+Two layers. **This project is developed TDD: write or update tests before implementing features.** Unit tests catch logic bugs; the e2e layer catches framework wiring and hydration issues that unit tests structurally cannot see (it found a login 500 and a price-formatting bug the unit suite missed).
 
 ```bash
-npm test          # run once
+npm test          # vitest unit/integration suite
 npm run test:watch
+npm run test:e2e  # Playwright: headless Chromium against the dev server
 ```
+
+### Unit tests (Vitest, configured in vite.config.ts)
 
 How it works:
 - Tests live in `src/tests/*.test.ts`
@@ -147,6 +144,14 @@ How it works:
 - `src/tests/helpers.ts` has `mockCookies()`, `seedProduct()`, `seedImages()`, `formRequest()`.
 - Form actions and loads are tested by importing the `+page.server.ts` module directly and calling `actions.*` / `load` with mock events. SvelteKit's `redirect()`/`error()` **throw** — catch and inspect with `isRedirect()` / `isHttpError()`; `fail()` returns a value — check with `isActionFailure()`.
 - The test admin password is `test-password` (hash set in `vite.config.ts` `test.env`).
+
+### E2E tests (Playwright, configured in playwright.config.ts)
+
+- Specs live in `e2e/*.spec.ts`; `e2e/global-setup.ts` builds a fresh `.e2e.db` (from the real schema.ts) and seeds two known products before each run.
+- Playwright starts the dev server itself on port 4173 with `DATABASE_URL=.e2e.db` — `local.db` is never touched. Single worker, shared DB.
+- The test admin password is `test-password` (same hash, set in playwright.config.ts `webServer.env`).
+- **Hydration gotcha:** Svelte-driven buttons (hamburger, add-to-cart) are dead until hydration. Clicking them straight after `page.goto` loses the click — use the `gotoHydrated` helper (waits for networkidle) before interacting with client-side UI. Plain HTML form posts (login, admin CRUD) don't need it.
+- One-off setup on a new machine: `npx playwright install chromium`.
 
 ## Svelte 5 notes
 

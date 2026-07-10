@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { cart } from '$lib/cart.svelte';
+	import { formatPrice } from '$lib/format';
 
 	let { data } = $props();
 	let { product, images } = $derived(data);
@@ -36,7 +37,7 @@
 	<!-- Product info -->
 	<div class="flex flex-col gap-3 lg:flex-1">
 		<h1 class="text-3xl">{product.name}</h1>
-		<p class="text-xl">£{product.price % 1 === 0 ? `${product.price}.00` : product.price}</p>
+		<p class="text-xl">{formatPrice(product.price)}</p>
 		<p>{product.description ?? ''}</p>
 
 		{#if inCart}

@@ -23,27 +23,33 @@ cd rebuild
 npm run dev
 ```
 
-Open http://localhost:5173. That's it — the database already exists (`local.db`),
-your admin password hash is already in `.env`.
+Open http://localhost:5173. That's it — the database already exists (`local.db`).
 
 If you're on a fresh clone / new machine:
 
 ```bash
 npm install
-cp .env.example .env      # then set ADMIN_PASSWORD_HASH (see below)
+npx playwright install chromium   # one-off, for the e2e tests
+cp .env.example .env
 npm run db:push           # creates local.db from the schema
+npm run set-password      # prompts for the admin password
 npm run dev
 ```
 
 ### Sanity checks
 
 ```bash
-npm test                  # test suite — should be all green
+npm test                  # unit tests (vitest) — should be all green
+npm run test:e2e          # browser tests (Playwright, headless Chromium)
 npm run check             # typecheck — should be 0 errors, 0 warnings
 npm run build             # confirm it builds for prod
 ```
 
-Tests run against a throwaway in-memory database — they never touch `local.db`.
+Both test layers use throwaway databases — they never touch `local.db`.
+The e2e suite drives a real headless browser through the actual pages
+(login, product CRUD, cart flow), so it catches things unit tests can't.
+On a new machine, run `npx playwright install chromium` once first.
+
 Use `npm run test:watch` while developing. The project is developed TDD:
 write the test first, watch it fail, then implement.
 
@@ -52,7 +58,7 @@ write the test first, watch it fail, then implement.
 ## Admin panel
 
 - **URL:** http://localhost:5173/admin
-- **Login:** password only (the email in `.env` is cosmetic). Sessions last 30 days.
+- **Login:** password only. Sessions last 30 days.
 - **Add a product:** Admin → New product. Name + price required. First uploaded
   image becomes the hero automatically.
 - **Edit a product:** click it in the dashboard. On the edit page:
@@ -62,15 +68,17 @@ write the test first, watch it fail, then implement.
 - **Delete a product:** button at the bottom of the edit page. Its images rows are
   cascade-deleted from the DB. (The image *files* stay on disk/S3 — harmless orphans.)
 
-### Forgot the admin password
-
-Generate a new hash and paste it into `.env` as `ADMIN_PASSWORD_HASH`:
+### Set or reset the admin password
 
 ```bash
-node -e "import('bcrypt').then(b => b.default.hash('yournewpassword', 10).then(console.log))"
+npm run set-password      # prompts for the new password
 ```
 
-Restart the dev server (or container in prod) to pick it up.
+Takes effect immediately — no restart needed. The bcrypt hash is stored in the
+database (`settings` table), **not** in `.env`. Don't move it to `.env`: the
+`$` characters in bcrypt hashes get silently mangled by env-file parsing,
+which makes login fail with "Invalid password" even when it's correct.
+(In prod, run it against the prod DB: `DATABASE_URL=/data/prod.db npm run set-password`.)
 
 ### Log everyone out (nuke all sessions)
 
@@ -111,8 +119,6 @@ Tables: `products`, `product_images` (FK → products, cascade delete),
 | Variable | Dev value | Prod value |
 |---|---|---|
 | `DATABASE_URL` | `local.db` | `/data/prod.db` |
-| `ADMIN_EMAIL` | anything | real email (display only) |
-| `ADMIN_PASSWORD_HASH` | bcrypt hash | bcrypt hash |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | not needed | required |
 | `AWS_REGION` | — | `eu-west-2` |
 | `AWS_S3_BUCKET` | — | `monniemermaid` |
@@ -167,8 +173,8 @@ Target: one Docker container on the VPS. Still to do, in order:
 
 | Symptom | Likely cause / fix |
 |---|---|
-| Admin login always fails | `ADMIN_PASSWORD_HASH` empty or wrong in `.env`; regenerate it. Restart the server after editing `.env`. |
-| "ADMIN_PASSWORD_HASH is not set" error | Same as above — `.env` not loaded or var missing. |
+| Admin login always fails | Reset it: `npm run set-password`. (Never put the hash in `.env` — the `$`s get mangled.) |
+| "Admin password not set" on the login page | Run `npm run set-password` against the right `DATABASE_URL`. |
 | Image upload fails in dev | `static/uploads/` should be auto-created, but check it's writable. |
 | Image upload crashes in prod | AWS SDK not installed, or AWS env vars missing. |
 | `better-sqlite3` errors after `npm install` / Node upgrade | Native module needs rebuilding: `npm rebuild better-sqlite3`. |
