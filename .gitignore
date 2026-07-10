@@ -27,3 +27,6 @@ vite.config.ts.timestamp-*
 # Playwright
 test-results/
 playwright-report/
+
+# Dev image uploads / seeded live images
+/static/uploads/

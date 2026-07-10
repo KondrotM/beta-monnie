@@ -21,8 +21,13 @@ A storefront for handmade mermaid crowns and tiaras (sister's business). This is
 cp .env.example .env
 npm run db:push               # creates local.db and runs schema
 npm run set-password          # prompts for the admin password, stores hash in DB
+npm run db:seed               # imports live products + images from mermaidmonnieofficial.com
 npm run dev                   # starts on http://localhost:5173
 ```
+
+`db:seed` (scripts/seed-live.ts) scrapes the Remix loader data from the live site's
+/products page, downloads images to `static/uploads/` (gitignored), and inserts
+into DATABASE_URL. Idempotent — skips products already present (matched by name).
 
 No Docker needed locally. The database is `local.db` in the project root (gitignored).
 
@@ -182,6 +187,6 @@ This project uses Svelte 5. Key differences from Svelte 4:
 - [ ] Swiper gallery with zoom on product detail page (`npm install swiper`)
 - [ ] Home page content (hero images, welcome text — waiting on copy/images)
 - [ ] Copy assets from old frontend/public/ into static/
-- [ ] Seed script with existing product data (source: old repo's postgres/setup.sql; add as `npm run db:seed`)
+- [x] Seed script with live product data (`npm run db:seed` — scrapes the live site)
 - [ ] Dockerfile + docker-compose.yml for prod (see RUNBOOK.md for the deploy plan)
 - [ ] Install AWS SDK before prod deploy: `npm install @aws-sdk/client-s3 @aws-sdk/lib-storage`

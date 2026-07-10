@@ -163,8 +163,8 @@ Target: one Docker container on the VPS. Still to do, in order:
       currently shows plain images
 - [ ] Home page hero content — needs copy + images from your sister
 - [ ] Copy assets (logo, fonts, hero images) from the old `frontend/public/` into `static/`
-- [ ] Seed script for the 6 existing products (data is in the old repo's
-      `postgres/setup.sql`; images are already on the CDN so just reference the URLs)
+- [x] ~~Seed script~~ — done: `npm run db:seed` imports the 6 live products
+      (and their images) straight from mermaidmonnieofficial.com
 - [ ] Dockerfile + compose (see deploy plan above)
 
 ---

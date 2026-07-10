@@ -17,6 +17,7 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
+		"db:seed": "node scripts/seed-live.ts",
 		"set-password": "node scripts/set-password.ts"
 	},
 	"devDependencies": {
