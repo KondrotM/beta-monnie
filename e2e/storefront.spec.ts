@@ -20,11 +20,14 @@ test('hamburger menu opens and navigates', async ({ page }) => {
 	await expect(page).toHaveURL('/products');
 });
 
-test('products page lists seeded products with availability', async ({ page }) => {
+test('products page shows cards with availability instead of price', async ({ page }) => {
 	await page.goto('/products');
-	// scope the availability label to its own product card
-	await expect(page.getByRole('link', { name: /Pearl Crown/ })).toContainText('Available');
-	await expect(page.getByRole('link', { name: /Seafoam Tiara/ })).toContainText('Sold out');
+	const pearl = page.getByRole('link', { name: /Pearl Crown/ });
+	await expect(pearl).toContainText('Available');
+	await expect(pearl).not.toContainText('£');
+	const seafoam = page.getByRole('link', { name: /Seafoam Tiara/ });
+	await expect(seafoam).toContainText('Sold out');
+	await expect(seafoam).not.toContainText('Available');
 });
 
 test('product detail shows name and formatted price', async ({ page }) => {
