@@ -117,7 +117,7 @@ Session helper lives in `src/lib/server/auth.ts`.
 - **Dev** (`NODE_ENV !== 'production'`): writes to `static/uploads/`, returns `/uploads/{filename}` URLs
 - **Prod**: uploads to S3, returns `https://cdn.mermaidmonnieofficial.com/{filename}` URLs
 
-To enable S3 uploads in prod, install: `npm install @aws-sdk/client-s3 @aws-sdk/lib-storage`
+The AWS SDK (`@aws-sdk/client-s3`, `@aws-sdk/lib-storage`) is installed as a runtime dependency; the S3 path lazy-imports it so dev never touches it.
 
 ## Cart
 
@@ -188,5 +188,7 @@ This project uses Svelte 5. Key differences from Svelte 4:
 - [ ] Home page content (hero images, welcome text — waiting on copy/images)
 - [ ] Copy assets from old frontend/public/ into static/
 - [x] Seed script with live product data (`npm run db:seed` — scrapes the live site)
-- [ ] Dockerfile + docker-compose.yml for prod (see RUNBOOK.md for the deploy plan)
-- [ ] Install AWS SDK before prod deploy: `npm install @aws-sdk/client-s3 @aws-sdk/lib-storage`
+- [x] Dockerfile + docker-compose.yml for prod (`node:22-alpine`, port 3350, SQLite on a `/data`
+      volume, schema auto-created on first boot by `scripts/init-db.ts` — deploy steps in RUNBOOK.md.
+      Caddy proxies to `localhost:3350` from outside the container; TLS is not the container's job)
+- [x] AWS SDK installed (`@aws-sdk/client-s3` + `@aws-sdk/lib-storage`, runtime deps)

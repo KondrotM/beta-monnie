@@ -24,6 +24,9 @@ vite.config.ts.timestamp-*
 # SQLite
 *.db
 
+# Generated during docker build (scripts/generate-schema-sql.ts)
+/schema.sql
+
 # Playwright
 test-results/
 playwright-report/
