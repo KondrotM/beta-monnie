@@ -1,0 +1,24 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    # Caddy (outside this container) proxies to localhost:3350 — bind to
+    # loopback so the app isn't reachable from the internet directly.
+    ports:
+      - '127.0.0.1:3350:3350'
+    # Prod secrets: AWS_* keys for S3 image uploads, plus ORIGIN (below)
+    env_file: .env
+    environment:
+      # adapter-node rejects form posts with a 403 unless it knows the public
+      # origin — must exactly match the URL Caddy serves the site on.
+      ORIGIN: ${ORIGIN:?set ORIGIN in .env, e.g. ORIGIN=https://beta.mermaidmonnieofficial.com}
+      # Pin prod values even if .env carries dev ones
+      DATABASE_URL: /data/prod.db
+      NODE_ENV: production
+    volumes:
+      # The SQLite file must outlive the container. Backup = copy
+      # /data/prod.db out of the volume (see RUNBOOK.md).
+      - data:/data
+
+volumes:
+  data:

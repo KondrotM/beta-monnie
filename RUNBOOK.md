@@ -129,31 +129,68 @@ mode — `npm run dev` is dev, the built app is prod. No flag to set.
 
 ---
 
-## Deploying to prod (not done yet — the plan)
+## Deploying to prod
 
-Target: one Docker container on the VPS. Still to do, in order:
+One Docker container on the VPS (`node:22-alpine`, multi-stage build), app on
+**port 3350**, published on loopback only. Caddy runs *outside* the container
+and reverse-proxies `https://yourdomain` → `localhost:3350` (TLS is Caddy's job).
 
-1. `npm install @aws-sdk/client-s3 @aws-sdk/lib-storage` — the S3 code in
-   `src/lib/server/images.ts` lazy-imports these; without them, image upload in
-   prod will crash.
-2. Write a `Dockerfile`: `npm ci && npm run build`, then run `node build` with
-   `better-sqlite3`'s native module intact (build and run on the same base image,
-   e.g. `node:22-slim`, to avoid native-module mismatches).
-3. `docker-compose.yml` with:
-   - a bind mount or named volume at `/data` (the SQLite file must live on a
-     volume or it dies with the container)
-   - `env_file: .env` with the prod values
-   - `ORIGIN=https://yourdomain` env var (adapter-node needs it for form actions
-     to pass CSRF checks — forms will 403 without it)
-4. Reverse proxy (nginx/caddy) in front for TLS.
-5. Seed the products (see below), or just re-enter them through the admin panel —
-   there are only ~6.
+On the VPS:
+
+```bash
+git clone <repo> && cd <repo>
+cp .env.example .env      # then fill in the prod values (see below)
+docker compose up -d --build
+docker compose exec app node scripts/set-password.ts   # set the admin password
+```
+
+`.env` on the VPS needs:
+
+- `ORIGIN=https://yourdomain` — **required**; compose refuses to start without
+  it, and form posts 403 if it doesn't exactly match the public URL.
+- The `AWS_*` and `CDN_URL` values — image uploads go to S3 in prod and crash
+  without them.
+- No `DATABASE_URL` needed — the container pins `/data/prod.db`.
+
+And a Caddyfile entry along the lines of:
+
+```
+yourdomain {
+    reverse_proxy localhost:3350
+}
+```
+
+### How the container works
+
+- The SQLite file lives on a named volume mounted at `/data` — it survives
+  rebuilds and `docker compose down`. (`down -v` would delete it. Don't.)
+- **First boot on an empty volume auto-creates the schema**: the Docker build
+  renders `schema.ts` to `schema.sql` (`scripts/generate-schema-sql.ts`) and the
+  container entrypoint applies it if the tables don't exist yet
+  (`scripts/init-db.ts`). Idempotent — an existing database is never touched.
+- Uploads up to 20MB are allowed (`BODY_SIZE_LIMIT` in the Dockerfile —
+  adapter-node's 512K default is too small for product photos).
+- A healthcheck polls `/` every 30s; `docker ps` shows healthy/unhealthy.
+
+### Getting the ~6 products in
+
+Either re-enter them through the admin panel, or copy your seeded dev database
+into the volume:
+
+```bash
+docker compose cp local.db app:/data/prod.db && docker compose restart app
+```
+
+(Product *images* under `/uploads/` won't exist in the container — re-upload
+those through the admin panel, which puts them on S3.)
 
 ### Prod ops once it's live
 
 - **Logs:** `docker compose logs -f`
 - **Update:** `git pull && docker compose up -d --build`
-- **Backup:** copy `/data/prod.db` off the VPS on a cron. That file is the whole store.
+- **Backup:** `docker compose cp app:/data/prod.db backup-$(date +%F).db` and
+  copy it off the VPS on a cron. That file is the whole store.
+- **Reset the admin password:** `docker compose exec app node scripts/set-password.ts`
 
 ---
 
@@ -165,7 +202,7 @@ Target: one Docker container on the VPS. Still to do, in order:
 - [ ] Copy assets (logo, fonts, hero images) from the old `frontend/public/` into `static/`
 - [x] ~~Seed script~~ — done: `npm run db:seed` imports the 6 live products
       (and their images) straight from mermaidmonnieofficial.com
-- [ ] Dockerfile + compose (see deploy plan above)
+- [x] ~~Dockerfile + compose~~ — done (see the deploy section above)
 
 ---
 
